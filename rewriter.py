@@ -47,9 +47,25 @@ class RewriteError(Exception):
     """Помилка, яку треба показати користувачу (текст українською)."""
 
 
+def detect_language(text: str) -> str:
+    """Грубо визначає мову тексту за алфавітом. Модель іноді переходить на англійську
+    (мову інструкцій), тому мову відповіді задаємо явно."""
+    cyrillic = len(re.findall(r"[а-яёіїєґ]", text, re.IGNORECASE))
+    latin = len(re.findall(r"[a-z]", text, re.IGNORECASE))
+    if cyrillic + latin == 0:
+        return "the language of the text"
+    # Чверті кирилиці досить: в українських технічних текстах багато латинських термінів
+    if cyrillic >= 0.25 * (cyrillic + latin):
+        ukrainian = re.search(r"[іїєґ]", text, re.IGNORECASE) or not re.search(r"[ыэёъ]", text, re.IGNORECASE)
+        return "Ukrainian" if ukrainian else "the language of the text"
+    return "English"
+
+
 def build_messages(text: str, style: str) -> list[dict]:
-    """Повідомлення для моделі: правила в system, текст користувача в тегах <text>."""
-    user = f"Style: {STYLES[style]}\n\n<text>\n{text}\n</text>"
+    """Повідомлення для моделі: правила в system, текст користувача в тегах <text>, мова відповіді явно."""
+    language = detect_language(text)
+    user = (f"Style: {STYLES[style]}\n\n<text>\n{text}\n</text>\n\n"
+            f"Output language: {language}. Output only the rewritten text.")
     return [{"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user}]
 
