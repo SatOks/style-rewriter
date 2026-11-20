@@ -72,3 +72,7 @@ if "answer" in st.session_state:
     st.markdown("**Результат**")
     with st.container(border=True, key="result"):
         st.markdown(as_plain_text(st.session_state.answer))
+
+st.divider()
+st.caption("Лабораторна робота 8, «Основи великих мовних моделей». "
+           "Код: [github.com/SatOks/style-rewriter](https://github.com/SatOks/style-rewriter)")
